@@ -1,51 +1,46 @@
-from flask_bcrypt import Bcrypt
-from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SelectField
-from wtforms.validators import DataRequired, Email, Length
-from flask_sqlalchemy import SQLAlchemy
 
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy_serializer import SerializerMixin
 
 db = SQLAlchemy()
-bcrypt = Bcrypt()
-
-class User(db.Model):
+# models added
+class User(db.Model, SerializerMixin):
+    __tablename__ = 'users'
+    serialize_rules = ('-orders.user','-trackers.user',)
+    role=db.Column(db.String, default='user')
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128), nullable=False)
-    role = db.Column(db.String(20), nullable=False, default='user')
+    username = db.Column(db.String)
+    email = db.Column(db.String)
+    password = db.Column(db.String)
+    orders = db.relationship('Orders', backref='user')
+    trackers = db.relationship('Trackeing', backref='user')
 
-    def set_password(self, password):
-        self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
+class Orders(db.Model, SerializerMixin):
+    __tablename__ = 'orders'  
+    serialize_rules = ('-users.order','-trackers.order',)
+    order_number = db.Column(db.Integer, primary_key=True)
+    name_of_parcel = db.Column(db.String)
+    destination = db.Column(db.String)
+    pickup = db.Column(db.String)
+    weight = db.Column(db.String)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    trackers = db.relationship('Tracking', backref='order')
 
-    def check_password(self, password):
-        return bcrypt.check_password_hash(self.password_hash, password)
+class Tracking(db.Model, SerializerMixin):
 
-class Order(db.Model):
+    __tablename__ = 'trackers'
+    serialize_rules =('-orders.tracker','-users.tracker',)
     id = db.Column(db.Integer, primary_key=True)
-    order_number = db.Column(db.String(20), unique=True, nullable=False)
-    name_of_parcel = db.Column(db.String(100), nullable=False)
-    destination = db.Column(db.String(100), nullable=False)
-    pickup = db.Column(db.String(100), nullable=False)
-    status = db.Column(db.Enum('pending', 'delivered'), default='pending')
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    user = db.relationship('User', backref=db.backref('orders', lazy=True))
-
-class UserForm(FlaskForm):
-    username = StringField('Username', validators=[DataRequired(), Length(min=4, max=50)])
-    email = StringField('Email', validators=[DataRequired(), Email(), Length(min=6, max=120)])
-    password = PasswordField('Password', validators=[DataRequired(), Length(min=6, max=128)])
-    role = StringField('Role', default='user')  
+    order_id = db.Column(db.Integer, db.ForeignKey('orders.order_number'))
+    status = db.Column(db.String, default='pending')
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    
 
 
-class OrderForm(FlaskForm):
-    order_number = StringField('Order Number', validators=[DataRequired(), Length(min=1, max=20)])
-    name_of_parcel = StringField('Parcel Name', validators=[DataRequired(), Length(min=1, max=100)])
-    destination = StringField('Destination', validators=[DataRequired(), Length(min=1, max=100)])
-    pickup = StringField('Pickup Location', validators=[DataRequired(), Length(min=1, max=100)])
-    status = SelectField('Status', choices=[('pending', 'Pending'), ('delivered', 'Delivered')], default='pending')
-    user_id = StringField('User ID', validators=[DataRequired()])
 
 
+
+
+ 
 
 
