@@ -12,10 +12,10 @@ class User(db.Model, SerializerMixin):
     username = db.Column(db.String)
     email = db.Column(db.String)
     password = db.Column(db.String)
-    orders = db.relationship('Orders', backref='user')
-    trackers = db.relationship('Trackeing', backref='user')
+    orders = db.relationship('Order', backref='user')
+    trackers = db.relationship('Tracking', backref='user')
 
-class Orders(db.Model, SerializerMixin):
+class Order(db.Model, SerializerMixin):
     __tablename__ = 'orders'  
     serialize_rules = ('-users.order','-trackers.order',)
     order_number = db.Column(db.Integer, primary_key=True)

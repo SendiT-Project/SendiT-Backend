@@ -1,7 +1,7 @@
 
 from flask import Flask
 from flask_migrate import Migrate
-from models import db, User,Tracking,Orders
+from models import db, User,Tracking,Order
 
 
 app = Flask(__name__)
