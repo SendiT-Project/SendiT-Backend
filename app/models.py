@@ -12,7 +12,7 @@ class User(db.Model, SerializerMixin):
     email = db.Column(db.String)
     password = db.Column(db.String)
     orders = db.relationship('Orders', backref='user')
-    trackers = db.relationship('Trackeing', backref='user')
+    trackers = db.relationship('Tracking', backref='user')
     
 
 
