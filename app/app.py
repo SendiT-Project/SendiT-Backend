@@ -1,3 +1,4 @@
+
 from flask import Flask
 from flask_migrate import Migrate
 from models import db, User,Tracking,Orders
@@ -9,4 +10,7 @@ app.config["SQLACHEMY_TRACK_MODIFICATIONS"]=False
 
 migrate = Migrate(app,db)
 db.init_app(app)
+
+if __name__ == '__main__':
+    app.run(debug=True)
 

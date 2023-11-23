@@ -1,3 +1,4 @@
+
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy_serializer import SerializerMixin
 
@@ -13,8 +14,6 @@ class User(db.Model, SerializerMixin):
     password = db.Column(db.String)
     orders = db.relationship('Orders', backref='user')
     trackers = db.relationship('Trackeing', backref='user')
-    
-
 
 class Orders(db.Model, SerializerMixin):
     __tablename__ = 'orders'  
@@ -36,11 +35,12 @@ class Tracking(db.Model, SerializerMixin):
     status = db.Column(db.String, default='pending')
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     
-# class Admin(db.Model, SerializerMixin):
-#     __tablename__ = 'admins'
-#     serialize_rules = ('-users.admin')
-#     id = db.Column(db.Integer, primary_key=True)
-#     admin_name = db.Column(db.String)
-#     admin_email = db.Column(db.String)
-#     password = db.Column(db.String)
-#     users = db.relationship('User', backref='admin')
+
+
+
+
+
+
+ 
+
+
