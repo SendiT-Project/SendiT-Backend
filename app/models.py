@@ -2,7 +2,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy_serializer import SerializerMixin
 
 db = SQLAlchemy()
-
+# models added
 class User(db.Model, SerializerMixin):
     __tablename__ = 'users'
     serialize_rules = ('-orders.user','-trackers.user',)
