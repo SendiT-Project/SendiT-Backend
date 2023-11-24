@@ -43,7 +43,7 @@ class Tracking(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     status = db.Column(db.String, default='pending')
 
-    #relationship
+    #relationships
     order_id = db.Column(db.Integer, db.ForeignKey('orders.order_number'))
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     
