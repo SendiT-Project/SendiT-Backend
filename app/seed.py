@@ -1,6 +1,6 @@
 from faker import Faker
 from app import app
-from models import db, User, Tracking, Order
+from models import db, User,Order, Admin
 from passlib.hash import sha256_crypt
 
 fake = Faker()
@@ -9,18 +9,30 @@ with app.app_context():
     
         User.query.delete()
         Order.query.delete()
-        Tracking.query.delete()
+        Admin.query.delete()
 
         users = []
         for n in range(10):
             email = fake.email()
-            password = fake.password(length=10, special_chars=True)
-            hashed_pass = sha256_crypt.hash(password)
+            _password_hash = fake.password(length=10, special_chars=True)
+            hashed_pass = sha256_crypt.hash(_password_hash)
 
-            user = User(username=fake.name(), email=email, password=hashed_pass)
+            user = User(username=fake.name(), email=email, _password_hash=hashed_pass)
             users.append(user)
 
         db.session.add_all(users)
+        db.session.commit()
+
+        admins = []
+        for n in range(2):
+            email = fake.email()
+            _password_hash = fake.password(length=10, special_chars=True)
+            hashed_pass = sha256_crypt.hash(_password_hash)
+
+            admin = Admin(username=fake.name(), _password_hash=hashed_pass)
+            admins.append(admin)
+
+        db.session.add_all(admins)
         db.session.commit()
 
         orders = []
@@ -28,6 +40,7 @@ with app.app_context():
             
             name_of_parcel = fake.word()
             destination = fake.city()
+            current_location = fake.text(10)
             pickup = fake.city()
             weight = fake.random_digit()
             user = fake.random_element(elements=users)
@@ -44,14 +57,6 @@ with app.app_context():
         db.session.add_all(orders)
         db.session.commit()
 
-        trackers = []
-        for i in range (10):
-             order = fake.random_element(elements=orders)
-             user = fake.random_element(elements=users)
-             tracker = Tracking(order=order,user=user)
-             trackers.append(tracker)
-        db.session.add_all(trackers)
-        db.session.commit()
 
     
 print("Seeding success")
