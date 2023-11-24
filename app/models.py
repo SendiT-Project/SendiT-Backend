@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy_serializer import SerializerMixin
 
 db = SQLAlchemy()
-# models added
+# we need to review Tracker/Order relationship
 class User(db.Model, SerializerMixin):
     __tablename__ = 'users'
 
