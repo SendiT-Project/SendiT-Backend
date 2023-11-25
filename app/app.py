@@ -20,8 +20,8 @@ api = Api(app)
 
 @app.before_request
 def check_if_logged_in():
-    if not session["user_id"]\
-    and request.endpoint != "login" and request.endpoint != "signup":
+
+    if 'user_id' not in session and request.endpoint not in ["login", "signup","index"]:
         return {"error": "unauthorized"}, 401
 
 class CheckSession(Resource):
@@ -32,7 +32,6 @@ class CheckSession(Resource):
         
         return {'error': 'Resource unavailable'}
     
-api.add_resource(CheckSession, "/session", endpoint="session")
 
 class Index(Resource):
     def get(self):
@@ -40,16 +39,16 @@ class Index(Resource):
         status =200
         headers ={}
         return make_response(response_body, status, headers)
-api.add_resource(Index, "/")
 
 
 class Signup(Resource):
     def post(self):
-        name = request.get_json().get("name")
+        username = request.get_json().get("username")
+        email = request.get_json().get("email")
         password = request.get_json().get("password")
 
-        if name and password:
-            new_user = User(name=name)
+        if username and email and password:
+            new_user = User(username=username, email=email)
             new_user.password_hash = password
 
             db.session.add(new_user)
@@ -60,22 +59,27 @@ class Signup(Resource):
         
         return {"error": "user details must be added"}, 422
         
-api.add_resource(Signup, "/signup", endpoint="signup")
 
 class Login(Resource):
     def post(self):
-        name = request.get_json().get("name")
+        username = request.get_json().get("username")
         password = request.get_json().get("password")
-        user = User.query.filter(User.name==name).first()
+        user = User.query.filter(User.username==username).first()
 
-        if user and user.authenticate(password):
-            session["user_id"] = user.id
+        if user:
+            if user.authenticate(password):
+                session['user_id'] = user.id
 
-            return user.to_dict(), 200
-        else:
-            return {'error': 'user or password id not correct!'}, 401
+                user_dict = user.to_dict()
+                print("Login successful. user ID:", user.id)  
+                return make_response(jsonify(user_dict), 201)
+            else:
+                print("Invalid password.")  
+                return {"error": "Invalid password"}, 401
         
-api.add_resource(Login, "/login", endpoint="login")
+        print("Customer not registered.") 
+        return {"error": "User not Registered"}, 404
+        
 
 class Logout(Resource):
     def delete(self):
@@ -85,6 +89,11 @@ class Logout(Resource):
         else:
             return {'error': 'unauthorized'}, 401
         
+
+api.add_resource(CheckSession, "/session", endpoint="session")
+api.add_resource(Index, "/", endpoint="index") 
+api.add_resource(Signup, "/signup", endpoint="signup")
+api.add_resource(Login, "/login", endpoint="login")       
 api.add_resource(Logout, "/logout", endpoint="logout")
 
 
