@@ -12,7 +12,7 @@ with app.app_context():
         Admin.query.delete()
 
         users = []
-        for n in range(10):
+        for n in range(5):
             email = fake.email()
             _password_hash = fake.password(length=10, special_chars=True)
             hashed_pass = sha256_crypt.hash(_password_hash)
@@ -36,7 +36,7 @@ with app.app_context():
         db.session.commit()
 
         orders = []
-        for n in range(10):
+        for n in range(5):
             
             name_of_parcel = fake.word()
             destination = fake.city()
