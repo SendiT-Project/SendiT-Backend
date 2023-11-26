@@ -40,7 +40,7 @@ with app.app_context():
             
             name_of_parcel = fake.word()
             destination = fake.city()
-            current_location = fake.text(10)
+            current_location = fake.sentence()
             pickup = fake.city()
             weight = fake.random_digit()
             user = fake.random_element(elements=users)
