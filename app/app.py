@@ -77,7 +77,7 @@ class Login(Resource):
                 print("Invalid password.")  
                 return {"error": "Invalid password"}, 401
         
-        print("Customer not registered.") 
+        print("User not registered.") 
         return {"error": "User not Registered"}, 404
         
 
