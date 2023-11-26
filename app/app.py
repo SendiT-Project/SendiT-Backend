@@ -3,14 +3,14 @@ from flask import Flask, make_response, jsonify, session, request
 from flask_restful import Api, Resource
 from flask_migrate import Migrate
 from models import db, User,Order
-# import os
-# from dotenv import load_dotenv
+import os
+from dotenv import load_dotenv
 
-# load_dotenv()
+load_dotenv()
 
 app = Flask(__name__)
-app.secret_key =  "@dkfi2o1p49978vkdn5k5768iknhnlpo"
-app.config["SQLALCHEMY_DATABASE_URI"]= "sqlite:///app.db"
+app.secret_key = os.environ["SECRET_KEY"]
+app.config["SQLALCHEMY_DATABASE_URI"]= os.environ["DATABASE_URI"]
 app.config["SQLACHEMY_TRACK_MODIFICATIONS"]=False
 
 migrate = Migrate(app,db)
