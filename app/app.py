@@ -97,6 +97,8 @@ api.add_resource(Login, "/login", endpoint="login")
 api.add_resource(Logout, "/logout", endpoint="logout")
 
 
+application = app
+
 if __name__ == '__main__':
     app.run(debug=True)
 
