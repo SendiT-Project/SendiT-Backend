@@ -2,7 +2,7 @@
 from flask import Flask, make_response, jsonify, session, request
 from flask_restful import Api, Resource
 from flask_migrate import Migrate
-from models import db, User,Order
+from models import db, User,Order, Admin
 # import os
 # from dotenv import load_dotenv
 
@@ -141,11 +141,6 @@ class Orders(Resource):
             return {'info': 'Order deleted successfully'}, 200
         else:
             return {'error': 'Order not found'}, 404
-
-    
-api.add_resource(Orders, "/orders", "/orders/<int:order_number>")
-        
-        
         
 
 class Logout(Resource):
@@ -157,11 +152,79 @@ class Logout(Resource):
             return {'error': 'unauthorized'}, 401
         
 
+
+        #Admin routes starts here
+        
+        
+@app.before_request
+def check_if_logged_in():
+    if 'admin_id' not in session and request.endpoint not in ["admin_login", "admin_signup", "index"]:
+        return {"error": "unauthorized"}, 401
+
+class CheckSession(Resource):
+    def get(self):
+        if session.get('admin_id'):
+            admin = Admin.query.filter(Admin.id == session['admin_id']).first()
+            return admin.to_dict(), 200
+
+        return {'error': 'Resource unavailable'}, 401
+
+
+
+    # we dont need an admin signing up
+
+#class AdminSignup(Resource):
+    # def post(self):
+    #     username = request.get_json().get("username")
+    #     password = request.get_json().get("password")
+
+    #     if username and password:
+    #         new_admin = Admin(username=username)
+    #         new_admin.password_hash = password  
+
+    #         db.session.add(new_admin)
+    #         db.session.commit()
+
+    #         session['admin_id'] = new_admin.id
+    #         return new_admin.to_dict(), 201
+
+    #     return {"error": "admin details must be provided"}, 422
+
+class AdminLogin(Resource):
+    def post(self):
+        username = request.get_json().get("username")
+        password = request.get_json().get("password")
+        admin = Admin.query.filter(Admin.username == username).first()
+
+        if admin:
+            if admin.authenticate(password):
+                session['admin_id'] = admin.id
+                admin_dict = admin.to_dict()
+                return make_response(jsonify(admin_dict), 201)
+            else:
+                return {"error": "Invalid password"}, 401
+
+        return {"error": "Admin not found"}, 404
+
+class AdminLogout(Resource):
+    def delete(self):
+        if session.get('admin_id'):
+            session.pop('admin_id', None)  
+            return {'info': 'admin logged out successfully'}
+        else:
+            return {'error': 'unauthorized'}, 401
+        
+
 api.add_resource(CheckSession, "/session", endpoint="session")
 api.add_resource(Index, "/", endpoint="index") 
 api.add_resource(Signup, "/signup", endpoint="signup")
 api.add_resource(Login, "/login", endpoint="login")       
 api.add_resource(Logout, "/logout", endpoint="logout")
+api.add_resource(Orders, "/orders", "/orders/<int:order_number>")
+# api.add_resource(AdminSignup, "/admin/signup", endpoint="admin_signup")
+api.add_resource(AdminLogin, "/admin/login", endpoint="admin_login")
+api.add_resource(AdminLogout, "/admin/logout", endpoint="admin_logout")
+
 
 
 if __name__ == '__main__':
