@@ -4,13 +4,13 @@ from flask_restful import Api, Resource
 from flask_migrate import Migrate
 from models import db, User,Order, Admin
 import os
-# from dotenv import load_dotenv
+from dotenv import load_dotenv
 
-# load_dotenv()
+load_dotenv()
 
 app = Flask(__name__)
-app.secret_key =  "@dkfi2o1p49978vkdn5k5768iknhnlpo"
-app.config["SQLALCHEMY_DATABASE_URI"]= "sqlite:///app.db"
+app.secret_key = os.environ["SECRET_KEY"]
+app.config["SQLALCHEMY_DATABASE_URI"]= os.environ["DATABASE_URI"]
 app.config["SQLACHEMY_TRACK_MODIFICATIONS"]=False
 
 migrate = Migrate(app,db)
@@ -77,7 +77,7 @@ class Login(Resource):
                 print("Invalid password.")  
                 return {"error": "Invalid password"}, 401
         
-        print("Customer not registered.") 
+        print("User not registered.") 
         return {"error": "User not Registered"}, 404
     
 
@@ -229,6 +229,8 @@ api.add_resource(AdminLogin, "/admin/login", endpoint="admin_login")
 api.add_resource(AdminLogout, "/admin/logout", endpoint="admin_logout")
 
 
+
+application = app
 
 if __name__ == '__main__':
     app.run(debug=True)
