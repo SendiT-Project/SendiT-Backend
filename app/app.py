@@ -81,6 +81,9 @@ class Login(Resource):
         return {"error": "User not Registered"}, 404
     
 
+    # Order routes
+    
+
 class Orders(Resource):
     def get(self,order_number=None):#the none will make getting by order_number optional
         if order_number:
