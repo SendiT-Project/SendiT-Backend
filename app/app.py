@@ -19,19 +19,12 @@ db.init_app(app)
 
 api = Api(app)
 
-@app.before_request
-def check_if_logged_in():
+# @app.before_request
+# def check_if_logged_in():
 
-    if 'user_id' not in session and request.endpoint not in ["login", "signup","index"]:
-        return {"error": "unauthorized"}, 401
+#     if 'user_id' not in session and request.endpoint not in ["login", "signup","index"]:
+#         return {"error": "unauthorized"}, 401
 
-class CheckSession(Resource):
-    def get(self):
-        if session.get('user_id'):
-            user = User.query.filter(User.id==session['user_id']).first()
-            return user.to_dict(), 200
-        
-        return {'error': 'Resource unavailable'}
     
 
 class Index(Resource):
@@ -78,22 +71,12 @@ class Login(Resource):
                 print("Invalid password.")  
                 return {"error": "Invalid password"}, 401
         
-        print("User not registered.") 
+        print("Customer not registered.") 
         return {"error": "User not Registered"}, 404
     
 
-    # Order routes
-    
-
 class Orders(Resource):
-    def get(self,order_number=None):#the none will make getting by order_number optional
-        if order_number:
-            orders = Order.query.get(order_number)
-            if orders:
-                return orders.to_dict(), 200
-            else:
-                return {"error": "order not found"}, 400
-        else:
+    def get(self):
             orders = [n.to_dict() for n in Order.query.all()]
             response = make_response(jsonify(orders), 200)
             return response
@@ -125,6 +108,21 @@ class Orders(Resource):
 
         return new_order.to_dict(), 201
     
+class Order_by_id(Resource):
+    def get(self, order_number):
+        order_by_id = Order.query.filter_by(order_number=order_number).first()
+
+        if order_by_id is None:
+            error_message = {'error': 'No order found with the specified ID'}
+            response = make_response(jsonify(error_message), 404)  
+        else:
+            response_dict = order_by_id.to_dict()
+            response = make_response(jsonify(response_dict), 200)
+
+        return response
+
+ 
+
     def patch(self, order_number):
         order = Order.query.get(order_number)
         updated_order = request.get_json().get('destination')
@@ -161,17 +159,25 @@ class Logout(Resource):
         
         
 @app.before_request
-def check_if_logged_in():
-    if 'admin_id' not in session and request.endpoint not in ["admin_login", "admin_signup", "index"]:
+def check_logged_in():
+    if ('admin_id' or  'user_id')  in session and request.endpoint  in ["admin_login", "admin_signup","signup","login", "index"]:
         return {"error": "unauthorized"}, 401
-
+    
 class CheckSession(Resource):
+    def get(self):
+        if session.get('user_id'):
+            user = User.query.filter(User.id==session['user_id']).first()
+            return user.to_dict(), 200
+        
+        return {'error': 'No user in session'}
+
+class AdminSession(Resource):
     def get(self):
         if session.get('admin_id'):
             admin = Admin.query.filter(Admin.id == session['admin_id']).first()
             return admin.to_dict(), 200
 
-        return {'error': 'Resource unavailable'}, 401
+        return {'error': 'no Admin in session'}, 401
 
 
 
@@ -220,18 +226,19 @@ class AdminLogout(Resource):
         
 
 api.add_resource(CheckSession, "/session", endpoint="session")
+api.add_resource(AdminSession, "/adminsession", endpoint="admin_session")
 api.add_resource(Index, "/", endpoint="index") 
 api.add_resource(Signup, "/signup", endpoint="signup")
 api.add_resource(Login, "/login", endpoint="login")       
 api.add_resource(Logout, "/logout", endpoint="logout")
-api.add_resource(Orders, "/orders", "/orders/<int:order_number>")
+api.add_resource(Orders, "/orders", endpoint = "orders")
 # api.add_resource(AdminSignup, "/admin/signup", endpoint="admin_signup")
 api.add_resource(AdminLogin, "/admin/login", endpoint="admin_login")
 api.add_resource(AdminLogout, "/admin/logout", endpoint="admin_logout")
+api.add_resource(Order_by_id, "/order_by_id/<int:order_number>", endpoint="order_by_id")
 
 
 
-application = app
 
 if __name__ == '__main__':
     app.run(debug=True)
