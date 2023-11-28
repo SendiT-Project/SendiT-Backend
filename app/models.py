@@ -23,6 +23,7 @@ class User(db.Model, SerializerMixin):
     def validate_email(self, key, email):
         if "@" not in email:
             raise ValueError("email must contain @")
+        return email
 
     #relationship
     orders = db.relationship('Order', backref='user',)
