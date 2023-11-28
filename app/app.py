@@ -3,6 +3,7 @@ from flask import Flask, make_response, jsonify, session, request
 from flask_restful import Api, Resource
 from flask_migrate import Migrate
 from models import db, User,Order, Admin
+from werkzeug.exceptions import NotFound
 import os
 from dotenv import load_dotenv
 
@@ -235,9 +236,14 @@ api.add_resource(Orders, "/orders", endpoint = "orders")
 # api.add_resource(AdminSignup, "/admin/signup", endpoint="admin_signup")
 api.add_resource(AdminLogin, "/admin/login", endpoint="admin_login")
 api.add_resource(AdminLogout, "/admin/logout", endpoint="admin_logout")
-api.add_resource(Order_by_id, "/order_by_id/<int:order_number>", endpoint="order_by_id")
+api.add_resource(Order_by_id, "/orders/<int:order_number>", endpoint="order_by_id")
 
 
+@app.errorhandler(NotFound)
+def handle_not_found(e):
+    response = make_response(jsonify({"message": "Resource not found in the server"}), 404)
+    
+    return response
 
 
 if __name__ == '__main__':
