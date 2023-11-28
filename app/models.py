@@ -41,6 +41,8 @@ class User(db.Model, SerializerMixin):
             self._password_hash, password.encode('utf-8')
         )
 
+
+
 class Admin(db.Model, SerializerMixin):
     __tablename__ = "admins"
 
