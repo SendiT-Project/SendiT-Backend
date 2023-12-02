@@ -1,7 +1,10 @@
 
 from flask import Flask, make_response, jsonify, session, request
 from flask_restful import Api, Resource
+from datetime import timedelta
 from flask_migrate import Migrate
+from flask_cors import CORS
+from flask_session import Session
 from models import db, User,Order, Admin
 from werkzeug.exceptions import NotFound
 import os
@@ -9,22 +12,28 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# testing
 app = Flask(__name__)
 app.secret_key = os.environ["SECRET_KEY"]
 app.config["SQLALCHEMY_DATABASE_URI"]= os.environ["DATABASE_URI"]
 app.config["SQLACHEMY_TRACK_MODIFICATIONS"]=False
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=1)
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_FILE_DIR'] = 'session_dir'
 
 migrate = Migrate(app,db)
 db.init_app(app)
 
 api = Api(app)
+app.config.from_object(__name__)
+Session(app)
+CORS(app, origins="*")
 
-# @app.before_request
-# def check_if_logged_in():
+@app.before_request
+def check_if_logged_in():
 
-#     if 'user_id' not in session and request.endpoint not in ["login", "signup","index"]:
-#         return {"error": "unauthorized"}, 401
+    if 'user_id' not in session and request.endpoint not in ["login", "signup", "session", "index"]:
+        return {"error": "unauthorized"}, 401
 
     
 
@@ -62,6 +71,9 @@ class Login(Resource):
         user = User.query.filter(User.username==username).first()
 
         if user:
+            # if "user_id" in session:
+            #     return {"error": "User is already logged in"}, 400
+            
             if user.authenticate(password):
                 session['user_id'] = user.id
 
@@ -72,7 +84,7 @@ class Login(Resource):
                 print("Invalid password.")  
                 return {"error": "Invalid password"}, 401
         
-        print("Customer not registered.") 
+        print("User not registered.") 
         return {"error": "User not Registered"}, 404
     
 
@@ -150,9 +162,11 @@ class Logout(Resource):
     def delete(self):
         if session.get('user_id'):
             session['user_id'] = None
-            return {'info': 'user logged out successfully'}
+            session.pop('user_id')
+            print("User logged out succssfully")
+            return {'info': 'user logged out successfully'}, 200
         else:
-            return {'error': 'unauthorized'}, 401
+            return {'error': 'You are not logged in. Please log in.'}, 401
         
 
 
@@ -170,7 +184,7 @@ class CheckSession(Resource):
             user = User.query.filter(User.id==session['user_id']).first()
             return user.to_dict(), 200
         
-        return {'error': 'No user in session'}
+        return {'error': 'No user in session'}, 401
 
 class AdminSession(Resource):
     def get(self):
