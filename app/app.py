@@ -12,7 +12,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# testing
 app = Flask(__name__)
 app.secret_key = os.environ["SECRET_KEY"]
 app.config["SQLALCHEMY_DATABASE_URI"]= os.environ["DATABASE_URI"]
@@ -85,7 +84,7 @@ class Login(Resource):
                 print("Invalid password.")  
                 return {"error": "Invalid password"}, 401
         
-        print("Customer not registered.") 
+        print("User not registered.") 
         return {"error": "User not Registered"}, 404
     
 
@@ -163,9 +162,11 @@ class Logout(Resource):
     def delete(self):
         if session.get('user_id'):
             session['user_id'] = None
-            return {'info': 'user logged out successfully'}
+            session.pop('user_id')
+            print("User logged out succssfully")
+            return {'info': 'user logged out successfully'}, 200
         else:
-            return {'error': 'unauthorized'}, 401
+            return {'error': 'You are not logged in. Please log in.'}, 401
         
 
 
@@ -183,7 +184,7 @@ class CheckSession(Resource):
             user = User.query.filter(User.id==session['user_id']).first()
             return user.to_dict(), 200
         
-        return {'error': 'No user in session'}
+        return {'error': 'No user in session'}, 401
 
 class AdminSession(Resource):
     def get(self):
