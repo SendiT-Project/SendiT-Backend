@@ -3,6 +3,7 @@
 
 ### Flask ###
 instance/*
+session_dir
 !instance/.gitignore
 .webassets-cache
 .env

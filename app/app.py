@@ -66,13 +66,14 @@ class Signup(Resource):
 
 class Login(Resource):
     def post(self):
+        if "user_id" in session:
+            return {"error": "User is already logged in"}, 400  
+          
         username = request.get_json().get("username")
         password = request.get_json().get("password")
         user = User.query.filter(User.username==username).first()
 
         if user:
-            # if "user_id" in session:
-            #     return {"error": "User is already logged in"}, 400
             
             if user.authenticate(password):
                 session['user_id'] = user.id
