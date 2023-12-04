@@ -5,7 +5,7 @@ from datetime import timedelta
 from flask_migrate import Migrate
 from flask_cors import CORS
 from flask_session import Session
-from models import db, User,Order, Admin
+from models import db, User,Order
 from werkzeug.exceptions import NotFound
 import os
 from dotenv import load_dotenv
@@ -18,7 +18,7 @@ app.config["SQLALCHEMY_DATABASE_URI"]= os.environ["DATABASE_URI"]
 app.config["SQLACHEMY_TRACK_MODIFICATIONS"]=False
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=1)
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_SAMESITE'] = "Lax"
 app.config['SESSION_FILE_DIR'] = 'session_dir'
 
 migrate = Migrate(app,db)
@@ -27,7 +27,7 @@ db.init_app(app)
 api = Api(app)
 app.config.from_object(__name__)
 Session(app)
-CORS(app, origins="*")
+CORS(app, origins="*", supports_credentials=True)
 
 @app.before_request
 def check_if_logged_in():
@@ -50,9 +50,10 @@ class Signup(Resource):
         username = request.get_json().get("username")
         email = request.get_json().get("email")
         password = request.get_json().get("password")
+        is_admin = request.get_json().get("is_admin")
 
         if username and email and password:
-            new_user = User(username=username, email=email)
+            new_user = User(username=username, email=email, is_admin=is_admin)
             new_user.password_hash = password
 
             db.session.add(new_user)
@@ -138,16 +139,45 @@ class Order_by_id(Resource):
  
 
     def patch(self, order_number):
-        order = Order.query.get(order_number)
-        updated_order = request.get_json().get('destination')
+        order = Order.query.filter_by(order_number=order_number).first()
 
-        if updated_order:
-            order.destination=updated_order
-            db.session.commit()
+        if not order:
+            return {'error': 'Order not found'}, 404
 
-            return order.to_dict(),200
-        else:
-            return {"error": "you did not update the order"}
+        data = request.get_json()
+
+
+        if 'destination' in data:
+            order.status = data['destination']
+
+        if 'status' in data:
+            order.status = data['status']
+
+        if 'current_location' in data:
+            order.current_location = data['current_location']
+
+        db.session.commit()
+
+        return order.to_dict(), 200
+
+
+    # def patch(self,order_number):
+    #     order = Order.query.filter_by(order_number=order_number).first()
+
+    #     for attr in request.form:
+    #         setattr(order, attr, request.form[attr])
+
+    #         db.session.add(order)
+    #         db.session.commit()
+
+    #         order_dict = order.to_dict()
+
+    #         response = make_response(
+    #             jsonify(order_dict),
+    #             200
+    #         )
+
+    #         return response
         
     def delete(self, order_number):
         order = Order.query.get(order_number)
@@ -187,13 +217,13 @@ class CheckSession(Resource):
         
         return {'error': 'No user in session'}, 401
 
-class AdminSession(Resource):
-    def get(self):
-        if session.get('admin_id'):
-            admin = Admin.query.filter(Admin.id == session['admin_id']).first()
-            return admin.to_dict(), 200
+# class AdminSession(Resource):
+#     def get(self):
+#         if session.get('admin_id'):
+#             admin = Admin.query.filter(Admin.id == session['admin_id']).first()
+#             return admin.to_dict(), 200
 
-        return {'error': 'no Admin in session'}, 401
+#         return {'error': 'no Admin in session'}, 401
 
 
 
@@ -216,41 +246,83 @@ class AdminSession(Resource):
 
     #     return {"error": "admin details must be provided"}, 422
 
-class AdminLogin(Resource):
-    def post(self):
-        username = request.get_json().get("username")
-        password = request.get_json().get("password")
-        admin = Admin.query.filter(Admin.username == username).first()
+# class AdminLogin(Resource):
+#     def post(self):
+#         username = request.get_json().get("username")
+#         password = request.get_json().get("password")
+#         admin = Admin.query.filter(Admin.username == username).first()
 
-        if admin:
-            if admin.authenticate(password):
-                session['admin_id'] = admin.id
-                admin_dict = admin.to_dict()
-                return make_response(jsonify(admin_dict), 201)
-            else:
-                return {"error": "Invalid password"}, 401
+#         if admin:
+#             if admin.authenticate(password):
+#                 session['admin_id'] = admin.id
+#                 admin_dict = admin.to_dict()
+#                 return make_response(jsonify(admin_dict), 201)
+#             else:
+#                 return {"error": "Invalid password"}, 401
 
-        return {"error": "Admin not found"}, 404
+#         return {"error": "Admin not found"}, 404
 
-class AdminLogout(Resource):
-    def delete(self):
-        if session.get('admin_id'):
-            session.pop('admin_id', None)  
-            return {'info': 'admin logged out successfully'}
-        else:
-            return {'error': 'unauthorized'}, 401
+# class AdminLogout(Resource):
+#     def delete(self):
+#         if session.get('admin_id'):
+#             session.pop('admin_id', None)  
+#             return {'info': 'admin logged out successfully'}
+#         else:
+#             return {'error': 'unauthorized'}, 401
+        
+# class AdminOrders(Resource):
+#     def get(self):
+#         orders = [n.to_dict() for n in Order.query.all()]
+#         response = make_response(jsonify(orders), 200)
+#         return response
+    
+
+# class AdminOrderById(Resource):
+#     def get(self, order_number):
+#         order_by_id = Order.query.filter_by(order_number=order_number).first()
+
+#         if order_by_id is None:
+#             raise NotFound('No order found with the specified ID')
+
+#         response_dict = order_by_id.to_dict()
+#         response = make_response(jsonify(response_dict), 200)
+
+#         return response
+    
+# def patch(self, order_number):
+   
+    # data = request.get_json()
+
+    # order = Order.query.get(order_number)
+
+    # if not order:
+    #     raise NotFound('No order found with the specified ID')
+
+    # if 'status' in data:
+    #     order.status = data['status']
+
+    # if 'current_location' in data:
+    #     order.current_location = data['current_location']
+
+    # db.session.commit()
+
+    # return order.to_dict(), 200
+
         
 
 api.add_resource(CheckSession, "/session", endpoint="session")
-api.add_resource(AdminSession, "/adminsession", endpoint="admin_session")
+# api.add_resource(AdminSession, "/adminsession", endpoint="admin_session")
 api.add_resource(Index, "/", endpoint="index") 
 api.add_resource(Signup, "/signup", endpoint="signup")
 api.add_resource(Login, "/login", endpoint="login")       
 api.add_resource(Logout, "/logout", endpoint="logout")
 api.add_resource(Orders, "/orders", endpoint = "orders")
 # api.add_resource(AdminSignup, "/admin/signup", endpoint="admin_signup")
-api.add_resource(AdminLogin, "/admin/login", endpoint="admin_login")
-api.add_resource(AdminLogout, "/admin/logout", endpoint="admin_logout")
+# api.add_resource(AdminLogin, "/admin/login", endpoint="admin_login")
+# api.add_resource(AdminLogout, "/admin/logout", endpoint="admin_logout")
+# api.add_resource(AdminOrders, "/admin/orders", endpoint="admin_orders")
+# api.add_resource(AdminOrderById, "/admin/orders/<int:order_number>", endpoint="admin_order_by_id")
+
 api.add_resource(Order_by_id, "/orders/<int:order_number>", endpoint="order_by_id")
 
 
