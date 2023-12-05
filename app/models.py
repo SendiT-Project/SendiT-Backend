@@ -18,6 +18,7 @@ class User(db.Model, SerializerMixin):
     username = db.Column(db.String,nullable=False, unique=True)
     email = db.Column(db.String, unique=True,nullable=False )
     _password_hash = db.Column(db.String, nullable=False)
+    is_admin = db.Column(db.Boolean, default=False, nullable=False)
     
     @validates("email")
     def validate_email(self, key, email):
@@ -46,28 +47,28 @@ class User(db.Model, SerializerMixin):
 
 
 
-class Admin(db.Model, SerializerMixin):
-    __tablename__ = "admins"
+# class Admin(db.Model, SerializerMixin):
+#     __tablename__ = "admins"
 
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String, unique=True, nullable=False)
-    _password_hash = db.Column(db.String, nullable=False)
+#     id = db.Column(db.Integer, primary_key=True)
+#     username = db.Column(db.String, unique=True, nullable=False)
+#     _password_hash = db.Column(db.String, nullable=False)
     
-    @hybrid_property
-    def password_hash(self):
-        raise AttributeError("password hash cannot be veiwed")
+#     @hybrid_property
+#     def password_hash(self):
+#         raise AttributeError("password hash cannot be veiwed")
     
-    @password_hash.setter
-    def password_hash(self, password):
-        password_hash = bcrypt.generate_password_hash(
-            password.encode('utf-8')
-        )
-        self._password_hash = password_hash.decode('utf-8')
+#     @password_hash.setter
+#     def password_hash(self, password):
+#         password_hash = bcrypt.generate_password_hash(
+#             password.encode('utf-8')
+#         )
+#         self._password_hash = password_hash.decode('utf-8')
     
-    def authenticate(self, password):
-        return bcrypt.check_password_hash(
-            self._password_hash, password.encode('utf-8')
-        )
+#     def authenticate(self, password):
+#         return bcrypt.check_password_hash(
+#             self._password_hash, password.encode('utf-8')
+#         )
 
     
 class Order(db.Model, SerializerMixin):
