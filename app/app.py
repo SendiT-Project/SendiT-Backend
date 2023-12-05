@@ -89,6 +89,21 @@ class Login(Resource):
         print("User not registered.") 
         return {"error": "User not Registered"}, 404
     
+class Logout(Resource):
+    def delete(self):
+        if session.get('user_id'):
+            session['user_id'] = None
+            session.pop('user_id')
+            print("User logged out succssfully")
+            return {'info': 'user logged out successfully'}, 200
+        else:
+            return {'error': 'You are not logged in. Please log in.'}, 401
+
+class Users(Resource):
+    def get(self):
+            user = [user.to_dict() for user in User.query.all()]
+            response = make_response(jsonify(user), 200)
+            return response
 
 class Orders(Resource):
     def get(self):
@@ -96,8 +111,7 @@ class Orders(Resource):
             response = make_response(jsonify(orders), 200)
             return response
    
-        
-    
+           
     def post(self):
         name_of_parcel = request.get_json().get('name_of_parcel')
         destination = request.get_json().get('destination')
@@ -148,7 +162,7 @@ class Order_by_id(Resource):
 
 
         if 'destination' in data:
-            order.status = data['destination']
+            order.destination = data['destination']
 
         if 'status' in data:
             order.status = data['status']
@@ -188,16 +202,6 @@ class Order_by_id(Resource):
         else:
             return {'error': 'Order not found'}, 404
         
-
-class Logout(Resource):
-    def delete(self):
-        if session.get('user_id'):
-            session['user_id'] = None
-            session.pop('user_id')
-            print("User logged out succssfully")
-            return {'info': 'user logged out successfully'}, 200
-        else:
-            return {'error': 'You are not logged in. Please log in.'}, 401
         
 
 
@@ -316,6 +320,7 @@ api.add_resource(Index, "/", endpoint="index")
 api.add_resource(Signup, "/signup", endpoint="signup")
 api.add_resource(Login, "/login", endpoint="login")       
 api.add_resource(Logout, "/logout", endpoint="logout")
+api.add_resource(Users, "/users", endpoint="users")
 api.add_resource(Orders, "/orders", endpoint = "orders")
 # api.add_resource(AdminSignup, "/admin/signup", endpoint="admin_signup")
 # api.add_resource(AdminLogin, "/admin/login", endpoint="admin_login")
