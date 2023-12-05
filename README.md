@@ -81,6 +81,70 @@ Database URI: Configure the DATABASE_URI with the appropriate connection details
 * /admin logout:Admin logout endpoint (DELETE request).
 
 ## TESTING
+import json
+import pytest
+from flask import Flask
+from app import app, db, User, Order
+
+@pytest.fixture
+def client():
+    app.config['TESTING'] = True
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+    with app.test_client() as client:
+        with app.app_context():
+            db.create_all()
+        yield client
+
+@pytest.fixture
+def auth_client(client):
+    # Function to authenticate the client
+    def authenticate(username, password):
+        response = client.post('/login', json={'username': username, 'password': password})
+        assert response.status_code == 201
+        return response.json['id']
+
+    # Authenticate a default user for testing
+    user_id = authenticate('testuser', 'testpassword')
+
+    # Return the authenticated client
+    yield client
+
+    # Clean up after the test
+    with app.app_context():
+        User.query.filter_by(id=user_id).delete()
+        db.session.commit()
+
+def test_index(client):
+    response = client.get('/')
+    assert response.status_code == 200
+    assert b"Hello, World" in response.data
+
+def test_signup(client):
+    response = client.post('/signup', json={'username': 'testuser', 'email': 'test@example.com', 'password': 'testpassword'})
+    assert response.status_code == 201
+    assert 'user_id' in client.session
+
+def test_login(client):
+    # Create a user for testing
+    test_user = User(username='testuser', email='test@example.com', password_hash='testpassword')
+    db.session.add(test_user)
+    db.session.commit()
+
+    response = client.post('/login', json={'username': 'testuser', 'password': 'testpassword'})
+    assert response.status_code == 201
+    assert 'user_id' in client.session
+
+def test_logout(auth_client):
+    response = auth_client.delete('/logout')
+    assert response.status_code == 200
+    assert 'user_id' not in auth_client.session
+
+def test_check_session(auth_client):
+    response = auth_client.get('/session')
+    assert response.status_code == 200
+    assert response.json['username'] == 'testuser'
 
 
 ## Database Seeding
