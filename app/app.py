@@ -9,6 +9,29 @@ from models import db, User,Order
 from werkzeug.exceptions import NotFound
 import os
 from dotenv import load_dotenv
+from flask_mail import Mail, Message, smtplib
+
+app = Flask(__name__)
+app.config['MAIL_SERVER'] = os.environ["SMTP"]
+app.config['MAIL_PORT'] = 2525
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
+app.config['MAIL_USERNAME'] = os.environ["USERNAME"]
+app.config['MAIL_PASSWORD'] = os.environ["PASSWORD"]
+
+mail = Mail(app)
+
+@app.route('/send')
+def send():
+    message = Message(
+        subject='Hello from the other side',
+        recepients= ['test.elasticmail123@gmail.com'],
+        sender='cynthia@elasticmail.com'
+    )
+    message.body= ""
+    mail.send(message)
+
+    return "Message sent!"
 
 load_dotenv()
 
@@ -25,6 +48,7 @@ migrate = Migrate(app,db)
 db.init_app(app)
 
 api = Api(app)
+
 app.config.from_object(__name__)
 Session(app)
 CORS(app, origins="*", supports_credentials=True)
@@ -33,9 +57,7 @@ CORS(app, origins="*", supports_credentials=True)
 def check_if_logged_in():
 
     if 'user_id' not in session and request.endpoint not in ["login", "signup", "session", "index"]:
-        return {"error": "unauthorized"}, 401
-
-    
+        return {"error": "unauthorized"}, 40
 
 class Index(Resource):
     def get(self):
@@ -174,7 +196,12 @@ class Order_by_id(Resource):
 
         return order.to_dict(), 200
 
+    def setUp(self):
+        self.app = app.test_client()
 
+    def test_index(self):
+        response = self.app.get('/')
+        self.assertEqual(response.status_code, 200)
     # def patch(self,order_number):
     #     order = Order.query.filter_by(order_number=order_number).first()
 
@@ -206,7 +233,6 @@ class Order_by_id(Resource):
 
 
         #Admin routes starts here
-        
         
 @app.before_request
 def check_logged_in():
@@ -329,8 +355,7 @@ api.add_resource(Orders, "/orders", endpoint = "orders")
 # api.add_resource(AdminOrderById, "/admin/orders/<int:order_number>", endpoint="admin_order_by_id")
 
 api.add_resource(Order_by_id, "/orders/<int:order_number>", endpoint="order_by_id")
-
-
+    
 @app.errorhandler(NotFound)
 def handle_not_found(e):
     response = make_response(jsonify({"message": "Resource not found in the server"}), 404)
@@ -340,3 +365,4 @@ def handle_not_found(e):
 
 if __name__ == '__main__':
     app.run(debug=True)
+    
