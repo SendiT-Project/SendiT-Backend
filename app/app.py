@@ -7,6 +7,7 @@ from flask_cors import CORS
 from flask_session import Session
 from models import db, User,Order
 from werkzeug.exceptions import NotFound
+# from flask_mail import Mail
 import os
 from dotenv import load_dotenv
 
@@ -21,8 +22,16 @@ app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=1)
 app.config['SESSION_COOKIE_SAMESITE'] = "Lax"
 app.config['SESSION_FILE_DIR'] = 'session_dir'
 
+# app.config['MAIL_SERVER'] = 'your_mail_server'
+# app.config['MAIL_PORT'] = 465
+# app.config['MAIL_USE_TLS'] = False
+# app.config['MAIL_USE_SSL'] = True
+# app.config['MAIL_USERNAME'] = 'your_username'
+# app.config['MAIL_PASSWORD'] = 'your_password'
+
 migrate = Migrate(app,db)
 db.init_app(app)
+# mail = Mail(app)
 
 api = Api(app)
 app.config.from_object(__name__)
@@ -175,23 +184,6 @@ class Order_by_id(Resource):
         return order.to_dict(), 200
 
 
-    # def patch(self,order_number):
-    #     order = Order.query.filter_by(order_number=order_number).first()
-
-    #     for attr in request.form:
-    #         setattr(order, attr, request.form[attr])
-
-    #         db.session.add(order)
-    #         db.session.commit()
-
-    #         order_dict = order.to_dict()
-
-    #         response = make_response(
-    #             jsonify(order_dict),
-    #             200
-    #         )
-
-    #         return response
         
     def delete(self, order_number):
         order = Order.query.get(order_number)
@@ -203,15 +195,6 @@ class Order_by_id(Resource):
             return {'error': 'Order not found'}, 404
         
         
-
-
-        #Admin routes starts here
-        
-        
-@app.before_request
-def check_logged_in():
-    if ('admin_id' or  'user_id')  in session and request.endpoint  in ["admin_login", "admin_signup","signup","login", "index"]:
-        return {"error": "unauthorized"}, 401
     
 class CheckSession(Resource):
     def get(self):
@@ -221,96 +204,6 @@ class CheckSession(Resource):
         
         return {'error': 'No user in session'}, 401
 
-# class AdminSession(Resource):
-#     def get(self):
-#         if session.get('admin_id'):
-#             admin = Admin.query.filter(Admin.id == session['admin_id']).first()
-#             return admin.to_dict(), 200
-
-#         return {'error': 'no Admin in session'}, 401
-
-
-
-    # we dont need an admin signing up
-
-#class AdminSignup(Resource):
-    # def post(self):
-    #     username = request.get_json().get("username")
-    #     password = request.get_json().get("password")
-
-    #     if username and password:
-    #         new_admin = Admin(username=username)
-    #         new_admin.password_hash = password  
-
-    #         db.session.add(new_admin)
-    #         db.session.commit()
-
-    #         session['admin_id'] = new_admin.id
-    #         return new_admin.to_dict(), 201
-
-    #     return {"error": "admin details must be provided"}, 422
-
-# class AdminLogin(Resource):
-#     def post(self):
-#         username = request.get_json().get("username")
-#         password = request.get_json().get("password")
-#         admin = Admin.query.filter(Admin.username == username).first()
-
-#         if admin:
-#             if admin.authenticate(password):
-#                 session['admin_id'] = admin.id
-#                 admin_dict = admin.to_dict()
-#                 return make_response(jsonify(admin_dict), 201)
-#             else:
-#                 return {"error": "Invalid password"}, 401
-
-#         return {"error": "Admin not found"}, 404
-
-# class AdminLogout(Resource):
-#     def delete(self):
-#         if session.get('admin_id'):
-#             session.pop('admin_id', None)  
-#             return {'info': 'admin logged out successfully'}
-#         else:
-#             return {'error': 'unauthorized'}, 401
-        
-# class AdminOrders(Resource):
-#     def get(self):
-#         orders = [n.to_dict() for n in Order.query.all()]
-#         response = make_response(jsonify(orders), 200)
-#         return response
-    
-
-# class AdminOrderById(Resource):
-#     def get(self, order_number):
-#         order_by_id = Order.query.filter_by(order_number=order_number).first()
-
-#         if order_by_id is None:
-#             raise NotFound('No order found with the specified ID')
-
-#         response_dict = order_by_id.to_dict()
-#         response = make_response(jsonify(response_dict), 200)
-
-#         return response
-    
-# def patch(self, order_number):
-   
-    # data = request.get_json()
-
-    # order = Order.query.get(order_number)
-
-    # if not order:
-    #     raise NotFound('No order found with the specified ID')
-
-    # if 'status' in data:
-    #     order.status = data['status']
-
-    # if 'current_location' in data:
-    #     order.current_location = data['current_location']
-
-    # db.session.commit()
-
-    # return order.to_dict(), 200
 
         
 
