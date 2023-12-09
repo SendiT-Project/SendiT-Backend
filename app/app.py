@@ -7,7 +7,7 @@ from flask_cors import CORS
 from flask_session import Session
 from models import db, User,Order
 from werkzeug.exceptions import NotFound
-# from flask_mail import Mail
+from flask_mail import Mail, Message
 import os
 from dotenv import load_dotenv
 
@@ -16,27 +16,55 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.environ["SECRET_KEY"]
 app.config["SQLALCHEMY_DATABASE_URI"]= os.environ["DATABASE_URI"]
-app.config["SQLACHEMY_TRACK_MODIFICATIONS"]=False
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"]=False
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=1)
 app.config['SESSION_COOKIE_SAMESITE'] = "Lax"
 app.config['SESSION_FILE_DIR'] = 'session_dir'
 
-# app.config['MAIL_SERVER'] = 'your_mail_server'
-# app.config['MAIL_PORT'] = 465
-# app.config['MAIL_USE_TLS'] = False
-# app.config['MAIL_USE_SSL'] = True
-# app.config['MAIL_USERNAME'] = 'your_username'
-# app.config['MAIL_PASSWORD'] = 'your_password'
+app.config['MAIL_SERVER']='smtp.elasticemail.com'
+app.config['MAIL_PORT'] = 2525
+app.config['MAIL_USERNAME'] = 'medrine.mulindi@gmail.com'
+app.config['MAIL_PASSWORD'] = '246C83BBDD60962335267E5FFBB38D143CD4'
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
+# app.config['MAIL_DEBUG'] = True
+
 
 migrate = Migrate(app,db)
 db.init_app(app)
-# mail = Mail(app)
+mail = Mail(app)
 
 api = Api(app)
 app.config.from_object(__name__)
 Session(app)
 CORS(app, origins="*", supports_credentials=True)
+
+
+def send_welcome_email(user_email, username):
+    
+    
+    message = Message(
+        subject='Welcome to Your App',
+        recipients=[user_email],
+        sender='medrine.mulindi@gmail.com',  
+    )
+    message.body = f'Hello {username},\n\nWelcome to Your App! Thank you for signing up.'
+    print(message.body)
+
+
+    mail.send(message)
+
+
+def send_login_email(email, username):
+    message = Message(
+        subject= 'Login successful',
+        recipients=[email],
+        sender='medrine.mulindi@gmail.com'
+    )
+    message.body = f'Hello {username},\n\nYou have successfully logged in. You have nailed it!'
+
+    mail.send(message)
 
 @app.before_request
 def check_if_logged_in():
@@ -69,6 +97,9 @@ class Signup(Resource):
             db.session.commit()
 
             session["user_id"] = new_user.id
+
+            send_welcome_email(email, username)
+
             return new_user.to_dict(), 201
         
         return {"error": "user details must be added"}, 422
@@ -89,6 +120,9 @@ class Login(Resource):
                 session['user_id'] = user.id
 
                 user_dict = user.to_dict()
+
+                send_login_email(user.email, user.username)
+                
                 print("Login successful. user ID:", user.id)  
                 return make_response(jsonify(user_dict), 201)
             else:
@@ -98,6 +132,8 @@ class Login(Resource):
         print("User not registered.") 
         return {"error": "User not Registered"}, 404
     
+
+
 class Logout(Resource):
     def delete(self):
         if session.get('user_id'):
@@ -232,5 +268,5 @@ def handle_not_found(e):
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(port=5000, debug=True)
 
