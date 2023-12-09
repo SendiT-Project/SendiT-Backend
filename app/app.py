@@ -66,6 +66,27 @@ def send_login_email(email, username):
 
     mail.send(message)
 
+
+def send_status_update_email(user_email, username, order):
+    message = Message(
+        subject='Order Status Update',
+        recipients=[user_email],
+        sender='medrine.mulindi@gmail.com'
+    )
+    message.body = f'Hello {username},\n\nYour order status has been updated to {order.status}.Thank you for choosing us.'
+
+    mail.send(message)
+
+def send_location_update_email(user_email, username, order):
+    message = Message(
+        subject='Order Location Update',
+        recipients=[user_email],
+        sender='medrine.mulindi@gmail.com'
+    )
+    message.body = f'Hello {username},\n\nThe current location of your order has been updated to {order.current_location}. Thank you for choosing us.'
+
+    mail.send(message)
+
 @app.before_request
 def check_if_logged_in():
 
@@ -210,10 +231,23 @@ class Order_by_id(Resource):
             order.destination = data['destination']
 
         if 'status' in data:
+            old_status = order.status
             order.status = data['status']
 
+            if old_status != data['status']:
+                user = User.query.get(order.user_id)
+                if user:
+                    send_status_update_email(user.email, user.username, order)
+
+    
         if 'current_location' in data:
+            old_current_location = order.current_location
             order.current_location = data['current_location']
+
+            if old_current_location != data['current_location']:
+                user = User.query.get(order.user_id)
+                if user:
+                    send_location_update_email(user.email, user.username, order)
 
         db.session.commit()
 
