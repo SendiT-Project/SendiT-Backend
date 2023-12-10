@@ -22,10 +22,10 @@ app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=1)
 app.config['SESSION_COOKIE_SAMESITE'] = "Lax"
 app.config['SESSION_FILE_DIR'] = 'session_dir'
 
-app.config['MAIL_SERVER']='smtp.elasticemail.com'
+app.config['MAIL_SERVER']=os.environ['SMTP']
 app.config['MAIL_PORT'] = 2525
-app.config['MAIL_USERNAME'] = 'medrine.mulindi@gmail.com'
-app.config['MAIL_PASSWORD'] = '246C83BBDD60962335267E5FFBB38D143CD4'
+app.config['MAIL_USERNAME'] = os.environ['SENDER']
+app.config['MAIL_PASSWORD'] = os.environ['PASSWORD']
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USE_SSL'] = False
 # app.config['MAIL_DEBUG'] = True
@@ -62,7 +62,7 @@ def send_login_email(email, username):
         recipients=[email],
         sender='medrine.mulindi@gmail.com'
     )
-    message.body = f'Hello {username},\n\nYou have successfully logged in. You have nailed it!'
+    message.body = f'Hello {username},\n\nYou have successfully logged in.'
 
     mail.send(message)
 
@@ -302,5 +302,4 @@ def handle_not_found(e):
 
 
 if __name__ == '__main__':
-    app.run(port=5000, debug=True)
-
+    app.run(debug=True)
