@@ -7,7 +7,7 @@ from flask_cors import CORS
 from flask_session import Session
 from models import db, User,Order
 from werkzeug.exceptions import NotFound
-# from flask_mail import Mail
+from flask_mail import Mail, Message
 import os
 from dotenv import load_dotenv
 from flask_mail import Mail, Message, smtplib
@@ -39,29 +39,78 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.environ["SECRET_KEY"]
-app.config["SQLALCHEMY_DATABASE_URI"]= os.environ["DATABASE_URI"]
-app.config["SQLACHEMY_TRACK_MODIFICATIONS"]=False
+app.config["SQLALCHEMY_DATABASE_URI"]= os.environ["sqlite:///app.db"]
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"]=False
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=1)
 app.config['SESSION_COOKIE_SAMESITE'] = "Lax"
 app.config['SESSION_FILE_DIR'] = 'session_dir'
 
-# app.config['MAIL_SERVER'] = 'your_mail_server'
-# app.config['MAIL_PORT'] = 465
-# app.config['MAIL_USE_TLS'] = False
-# app.config['MAIL_USE_SSL'] = True
-# app.config['MAIL_USERNAME'] = 'your_username'
-# app.config['MAIL_PASSWORD'] = 'your_password'
+app.config['MAIL_SERVER']='smtp.elasticemail.com'
+app.config['MAIL_PORT'] = 2525
+app.config['MAIL_USERNAME'] = 'medrine.mulindi@gmail.com'
+app.config['MAIL_PASSWORD'] = '246C83BBDD60962335267E5FFBB38D143CD4'
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
+# app.config['MAIL_DEBUG'] = True
+
 
 migrate = Migrate(app,db)
 db.init_app(app)
-# mail = Mail(app)
+mail = Mail(app)
 
 api = Api(app)
 
 app.config.from_object(__name__)
 Session(app)
 CORS(app, origins="*", supports_credentials=True)
+
+
+def send_welcome_email(user_email, username):
+    
+    
+    message = Message(
+        subject='Welcome to Your App',
+        recipients=[user_email],
+        sender='medrine.mulindi@gmail.com',  
+    )
+    message.body = f'Hello {username},\n\nWelcome to Your App! Thank you for signing up.'
+    print(message.body)
+
+
+    mail.send(message)
+
+
+def send_login_email(email, username):
+    message = Message(
+        subject= 'Login successful',
+        recipients=[email],
+        sender='medrine.mulindi@gmail.com'
+    )
+    message.body = f'Hello {username},\n\nYou have successfully logged in.'
+
+    mail.send(message)
+
+
+def send_status_update_email(user_email, username, order):
+    message = Message(
+        subject='Order Status Update',
+        recipients=[user_email],
+        sender='medrine.mulindi@gmail.com'
+    )
+    message.body = f'Hello {username},\n\nYour order status has been updated to {order.status}.Thank you for choosing us.'
+
+    mail.send(message)
+
+def send_location_update_email(user_email, username, order):
+    message = Message(
+        subject='Order Location Update',
+        recipients=[user_email],
+        sender='medrine.mulindi@gmail.com'
+    )
+    message.body = f'Hello {username},\n\nThe current location of your order has been updated to {order.current_location}. Thank you for choosing us.'
+
+    mail.send(message)
 
 @app.before_request
 def check_if_logged_in():
@@ -92,6 +141,9 @@ class Signup(Resource):
             db.session.commit()
 
             session["user_id"] = new_user.id
+
+            send_welcome_email(email, username)
+
             return new_user.to_dict(), 201
         
         return {"error": "user details must be added"}, 422
@@ -112,6 +164,9 @@ class Login(Resource):
                 session['user_id'] = user.id
 
                 user_dict = user.to_dict()
+
+                send_login_email(user.email, user.username)
+                
                 print("Login successful. user ID:", user.id)  
                 return make_response(jsonify(user_dict), 201)
             else:
@@ -121,6 +176,8 @@ class Login(Resource):
         print("User not registered.") 
         return {"error": "User not Registered"}, 404
     
+
+
 class Logout(Resource):
     def delete(self):
         if session.get('user_id'):
@@ -197,10 +254,23 @@ class Order_by_id(Resource):
             order.destination = data['destination']
 
         if 'status' in data:
+            old_status = order.status
             order.status = data['status']
 
+            if old_status != data['status']:
+                user = User.query.get(order.user_id)
+                if user:
+                    send_status_update_email(user.email, user.username, order)
+
+    
         if 'current_location' in data:
+            old_current_location = order.current_location
             order.current_location = data['current_location']
+
+            if old_current_location != data['current_location']:
+                user = User.query.get(order.user_id)
+                if user:
+                    send_location_update_email(user.email, user.username, order)
 
         db.session.commit()
 
@@ -258,19 +328,12 @@ class CheckSession(Resource):
         
 
 api.add_resource(CheckSession, "/session", endpoint="session")
-# api.add_resource(AdminSession, "/adminsession", endpoint="admin_session")
 api.add_resource(Index, "/", endpoint="index") 
 api.add_resource(Signup, "/signup", endpoint="signup")
 api.add_resource(Login, "/login", endpoint="login")       
 api.add_resource(Logout, "/logout", endpoint="logout")
 api.add_resource(Users, "/users", endpoint="users")
 api.add_resource(Orders, "/orders", endpoint = "orders")
-# api.add_resource(AdminSignup, "/admin/signup", endpoint="admin_signup")
-# api.add_resource(AdminLogin, "/admin/login", endpoint="admin_login")
-# api.add_resource(AdminLogout, "/admin/logout", endpoint="admin_logout")
-# api.add_resource(AdminOrders, "/admin/orders", endpoint="admin_orders")
-# api.add_resource(AdminOrderById, "/admin/orders/<int:order_number>", endpoint="admin_order_by_id")
-
 api.add_resource(Order_by_id, "/orders/<int:order_number>", endpoint="order_by_id")
     
 @app.errorhandler(NotFound)
@@ -283,3 +346,4 @@ def handle_not_found(e):
 if __name__ == '__main__':
     app.run(debug=True)
     
+    app.run(port=5005, debug=True)
