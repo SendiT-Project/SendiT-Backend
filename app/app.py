@@ -22,10 +22,10 @@ app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=1)
 app.config['SESSION_COOKIE_SAMESITE'] = "Lax"
 app.config['SESSION_FILE_DIR'] = 'session_dir'
 
-app.config['MAIL_SERVER']=os.environ['SMTP']
+app.config['MAIL_SERVER']='smtp.elasticemail.com'
 app.config['MAIL_PORT'] = 2525
-app.config['MAIL_USERNAME'] = os.environ['SENDER']
-app.config['MAIL_PASSWORD'] = os.environ['PASSWORD']
+app.config['MAIL_USERNAME'] = 'medrine.mulindi@gmail.com'
+app.config['MAIL_PASSWORD'] = '246C83BBDD60962335267E5FFBB38D143CD4'
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USE_SSL'] = False
 # app.config['MAIL_DEBUG'] = True
@@ -278,19 +278,12 @@ class CheckSession(Resource):
         
 
 api.add_resource(CheckSession, "/session", endpoint="session")
-# api.add_resource(AdminSession, "/adminsession", endpoint="admin_session")
 api.add_resource(Index, "/", endpoint="index") 
 api.add_resource(Signup, "/signup", endpoint="signup")
 api.add_resource(Login, "/login", endpoint="login")       
 api.add_resource(Logout, "/logout", endpoint="logout")
 api.add_resource(Users, "/users", endpoint="users")
 api.add_resource(Orders, "/orders", endpoint = "orders")
-# api.add_resource(AdminSignup, "/admin/signup", endpoint="admin_signup")
-# api.add_resource(AdminLogin, "/admin/login", endpoint="admin_login")
-# api.add_resource(AdminLogout, "/admin/logout", endpoint="admin_logout")
-# api.add_resource(AdminOrders, "/admin/orders", endpoint="admin_orders")
-# api.add_resource(AdminOrderById, "/admin/orders/<int:order_number>", endpoint="admin_order_by_id")
-
 api.add_resource(Order_by_id, "/orders/<int:order_number>", endpoint="order_by_id")
 
 
@@ -302,4 +295,4 @@ def handle_not_found(e):
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(port=5005, debug=True)
