@@ -14,8 +14,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = os.environ["SECRET_KEY"]
-app.config["SQLALCHEMY_DATABASE_URI"]= os.environ["DATABASE_URI"]
+app.secret_key = "SECRET_KEY"
+app.config["SQLALCHEMY_DATABASE_URI"]= "sqlite:///app.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"]=False
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=1)
