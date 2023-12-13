@@ -38,7 +38,7 @@ mail = Mail(app)
 api = Api(app)
 app.config.from_object(__name__)
 Session(app)
-CORS(app, origins="*", supports_credentials=True)
+CORS(app, origins="https://sendi-t-frontend-6pgg.vercel.app/", supports_credentials=True)
 
 
 def send_welcome_email(user_email, username):
@@ -108,10 +108,10 @@ class Signup(Resource):
         username = request.get_json().get("username")
         email = request.get_json().get("email")
         password = request.get_json().get("password")
-        is_admin = request.get_json().get("is_admin")
+        admin = request.get_json().get("admin")
 
         if username and email and password:
-            new_user = User(username=username, email=email, is_admin=is_admin)
+            new_user = User(username=username, email=email, admin=admin)
             new_user.password_hash = password
 
             db.session.add(new_user)
