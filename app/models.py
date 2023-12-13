@@ -18,7 +18,7 @@ class User(db.Model, SerializerMixin):
     username = db.Column(db.String,nullable=False, unique=True)
     email = db.Column(db.String, unique=True,nullable=False )
     _password_hash = db.Column(db.String, nullable=False)
-    is_admin = db.Column(db.Boolean, default=False, nullable=False)
+    admin = db.Column(db.Boolean, default=False, nullable=False)
     
     @validates("email")
     def validate_email(self, key, email):
