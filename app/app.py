@@ -21,6 +21,7 @@ app.config['SESSION_TYPE'] = 'filesystem'
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=1)
 app.config['SESSION_COOKIE_SAMESITE'] = "Lax"
 app.config['SESSION_FILE_DIR'] = 'session_dir'
+app.config['JSONIFY_PRETTYPRINT_REGULAR']= True
 
 app.config['MAIL_SERVER']='smtp.elasticemail.com'
 app.config['MAIL_PORT'] = 2525
@@ -28,7 +29,7 @@ app.config['MAIL_USERNAME'] = 'medrine.mulindi@gmail.com'
 app.config['MAIL_PASSWORD'] = '246C83BBDD60962335267E5FFBB38D143CD4'
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USE_SSL'] = False
-# app.config['MAIL_DEBUG'] = True
+
 
 
 migrate = Migrate(app,db)
@@ -121,9 +122,9 @@ class Signup(Resource):
 
             send_welcome_email(email, username)
 
-            return new_user.to_dict(), 201
+            return make_response(jsonify(new_user.to_dict()), 201)
         
-        return {"error": "user details must be added"}, 422
+        return make_response(jsonify({"error": "user details must be added"}), 422)
         
 
 class Login(Resource):
@@ -144,14 +145,15 @@ class Login(Resource):
 
                 send_login_email(user.email, user.username)
                 
-                print("Login successful. user ID:", user.id)  
+                print("Login successful. user ID:", user.id) 
+                
                 return make_response(jsonify(user_dict), 201)
             else:
                 print("Invalid password.")  
-                return {"error": "Invalid password"}, 401
+                return make_response(jsonify({"error": "Invalid password"}), 401)
         
         print("User not registered.") 
-        return {"error": "User not Registered"}, 404
+        return make_response(jsonify({"error": "User not Registered"}), 404)
     
 
 
@@ -161,9 +163,9 @@ class Logout(Resource):
             session['user_id'] = None
             session.pop('user_id')
             print("User logged out succssfully")
-            return {'info': 'user logged out successfully'}, 200
+            return make_response(jsonify({'info': 'user logged out successfully'}), 200)
         else:
-            return {'error': 'You are not logged in. Please log in.'}, 401
+            return make_response(jsonify({'error': 'You are not logged in. Please log in.'}), 401)
 
 class Users(Resource):
     def get(self):
@@ -201,7 +203,7 @@ class Orders(Resource):
         db.session.add(new_order)
         db.session.commit()
 
-        return new_order.to_dict(), 201
+        return make_response(jsonify(new_order.to_dict()), 201)
     
 class Order_by_id(Resource):
     def get(self, order_number):
@@ -251,7 +253,7 @@ class Order_by_id(Resource):
 
         db.session.commit()
 
-        return order.to_dict(), 200
+        return make_response(jsonify(order.to_dict()), 200)
 
 
         
@@ -262,7 +264,7 @@ class Order_by_id(Resource):
             db.session.commit()
             return {'info': 'Order deleted successfully'}, 200
         else:
-            return {'error': 'Order not found'}, 404
+            return make_response(jsonify({'error': 'Order not found'}), 404)
         
         
     
@@ -270,9 +272,9 @@ class CheckSession(Resource):
     def get(self):
         if session.get('user_id'):
             user = User.query.filter(User.id==session['user_id']).first()
-            return user.to_dict(), 200
+            return make_response(jsonify(user.to_dict()), 200)
         
-        return {'error': 'No user in session'}, 401
+        return make_response(jsonify({'error': 'No user in session'}), 401)
 
 
         
