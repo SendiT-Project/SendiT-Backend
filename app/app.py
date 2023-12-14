@@ -39,7 +39,7 @@ mail = Mail(app)
 api = Api(app)
 app.config.from_object(__name__)
 Session(app)
-CORS(app, origins="https://sendit-react.onrender.com/", supports_credentials=True)
+CORS(app, supports_credentials=True)
 
 
 def send_welcome_email(user_email, username):
@@ -92,13 +92,13 @@ def send_location_update_email(user_email, username, order):
 def check_if_logged_in():
 
     if 'user_id' not in session and request.endpoint not in ["login", "signup", "session", "index"]:
-        return {"error": "unauthorized"}, 401
-
+        return make_response(jsonify({"error": "unauthorized"}), 401
+)
     
 
 class Index(Resource):
     def get(self):
-        response_body = "<h1>Hello, World</h1>"
+        response_body = "Hello, World"
         status =200
         headers ={}
         return make_response(response_body, status, headers)
@@ -130,7 +130,7 @@ class Signup(Resource):
 class Login(Resource):
     def post(self):
         if "user_id" in session:
-            return {"error": "User is already logged in"}, 400  
+            return make_response(jsonify({"error": "User is already logged in"}), 400  )
           
         username = request.get_json().get("username")
         password = request.get_json().get("password")
@@ -198,7 +198,7 @@ class Orders(Resource):
         if user_id:
             new_order.user_id = user_id
         else:
-            return {'error': 'User not authenticated'}, 401
+            return make_response(jsonify({'error': 'User not authenticated'}), 401)
 
         db.session.add(new_order)
         db.session.commit()
@@ -224,7 +224,7 @@ class Order_by_id(Resource):
         order = Order.query.filter_by(order_number=order_number).first()
 
         if not order:
-            return {'error': 'Order not found'}, 404
+            return make_response(jsonify({'error': 'Order not found'}), 404)
 
         data = request.get_json()
 
@@ -262,7 +262,7 @@ class Order_by_id(Resource):
         if order:
             db.session.delete(order)
             db.session.commit()
-            return {'info': 'Order deleted successfully'}, 200
+            return make_response(jsonify({'info': 'Order deleted successfully'}), 200)
         else:
             return make_response(jsonify({'error': 'Order not found'}), 404)
         
