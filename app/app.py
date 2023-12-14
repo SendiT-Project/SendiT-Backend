@@ -39,7 +39,7 @@ mail = Mail(app)
 api = Api(app)
 app.config.from_object(__name__)
 Session(app)
-CORS(app, origins="https://sendi-t-frontend-6pgg.vercel.app/", supports_credentials=True)
+CORS(app, origins="https://sendit-react.onrender.com/", supports_credentials=True)
 
 
 def send_welcome_email(user_email, username):
@@ -66,7 +66,7 @@ def send_login_email(email, username):
     message.body = f'Hello {username},\n\nYou have successfully logged in.'
 
     mail.send(message)
-
+    
 
 def send_status_update_email(user_email, username, order):
     message = Message(
@@ -143,7 +143,7 @@ class Login(Resource):
 
                 user_dict = user.to_dict()
 
-                send_login_email(user.email, user.username)
+                # send_login_email(user.email, user.username)
                 
                 print("Login successful. user ID:", user.id) 
                 
