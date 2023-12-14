@@ -270,10 +270,14 @@ class Order_by_id(Resource):
     
 class CheckSession(Resource):
     def get(self):
+        print("Received request to /session")
         if session.get('user_id'):
             user = User.query.filter(User.id==session['user_id']).first()
+
+            print(f"User authenticated: {user}")
             return make_response(jsonify(user.to_dict()), 200)
         
+        print("User not authenticated")
         return make_response(jsonify({'error': 'No user in session'}), 401)
 
 
