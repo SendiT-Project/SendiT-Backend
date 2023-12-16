@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True, origins='*')
+CORS(app, supports_credentials=True, origins='*', allow_headers=["Content-Type", "Authorization"])
 app.secret_key = os.environ["SECRET_KEY"]
 app.config["SQLALCHEMY_DATABASE_URI"]= os.environ["DATABASE_URI"]
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"]=False
@@ -91,6 +91,9 @@ def send_location_update_email(user_email, username, order):
 
 @app.before_request
 def check_if_logged_in():
+    if request.method == 'OPTIONS':
+        return
+        
 
     if 'user_id' not in session and request.endpoint not in ["login", "signup", "session", "index"]:
         return make_response(jsonify({"error": "unauthorized"}), 401
