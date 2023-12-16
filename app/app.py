@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
+CORS(app, supports_credentials=True, origins='*')
 app.secret_key = os.environ["SECRET_KEY"]
 app.config["SQLALCHEMY_DATABASE_URI"]= os.environ["DATABASE_URI"]
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"]=False
@@ -39,7 +40,7 @@ mail = Mail(app)
 api = Api(app)
 app.config.from_object(__name__)
 Session(app)
-CORS(app, supports_credentials=True)
+
 
 
 def send_welcome_email(user_email, username):
@@ -204,6 +205,14 @@ class Orders(Resource):
         db.session.commit()
 
         return make_response(jsonify(new_order.to_dict()), 201)
+    
+@app.route("/orders", methods=["OPTIONS"])
+def handle_options_request():
+    response = make_response()
+    response.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    return response
+
     
 class Order_by_id(Resource):
     def get(self, order_number):
